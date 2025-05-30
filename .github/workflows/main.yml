@@ -26,7 +26,7 @@ jobs:
         go build -ldflags="-H windowsgui" -o "英华学堂网课助手.exe"
       
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: 英华学堂网课助手
         path: 英华学堂网课助手.exe
