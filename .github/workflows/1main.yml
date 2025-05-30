@@ -1,0 +1,55 @@
+name: Complete Build Solution
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.21'
+      
+      - name: Fix go.mod
+        run: |
+          echo 'replace golang.org/x/sys => golang.org/x/sys v0.15.0' >> go.mod
+          cat go.mod
+      
+      - name: Clean Go cache
+        run: |
+          go clean -modcache
+      
+      - name: Install dependencies with downgraded sys
+        run: |
+          go get golang.org/x/sys@v0.15.0
+          go mod tidy
+          go get -u github.com/lxn/walk@latest
+          go get -u github.com/lxn/win@latest
+      
+      - name: Build with verbose output
+        run: |
+          go build -v -o mooc-gui.exe
+      
+      - name: List files
+        run: |
+          dir
+      
+      - name: Create artifact ZIP
+        run: |
+          Compress-Archive -Path mooc-gui.exe -DestinationPath mooc-gui.zip
+      
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: mooc-gui.zip
+          tag_name: v0.1.${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
